@@ -234,7 +234,20 @@
             margin-left: auto;       /* Center the block */
             margin-right: auto;      /* Center the block */
         }
-        .weekend .day-number-wrapper { color: #f87171; font-weight: 600; }
+        /* Professional weekend styling with pill effect */
+        .calendar-grid-container .calendar-grid-day-cell.weekend {
+            position: relative;
+            background-color: rgba(3, 6, 69, 0.03);
+        }
+        
+        /* Weekend styling for day numbers: Individual pill effect */
+        .weekend .day-number-wrapper {
+            background-color: rgba(3, 6, 69, 0.4); /* More prominent navy pill */
+            color: white; /* White text for good contrast */
+            padding: 0.2rem 0.4rem; /* Adjust padding for pill size */
+            border-radius: 0.375rem; /* Rounded corners for the pill */
+            font-weight: 600; /* Correctly placed */
+        }
         .events-wrapper {
             display: flex; flex-direction: column; gap: 1px; align-items: center;
         }
@@ -272,9 +285,10 @@
         }
         /* Removed .calendar-zoom-2 and .calendar-zoom-3 styles */
 
-        .calendar-grid-day-cell.publish { background-color: #fef9c3; } /* Removed !important */
-        .calendar-grid-day-cell.planning { background-color: #e0f2fe; } /* Removed !important */
-        .calendar-grid-day-cell.publicHoliday { background-color: #f3f4f6; } /* Removed !important */
+        /* Event type styling - clean and professional */
+        .calendar-grid-day-cell.publish { background-color: #fef9c3; } 
+        .calendar-grid-day-cell.planning { background-color: #e0f2fe; }
+        .calendar-grid-day-cell.publicHoliday { background-color: #f3f4f6; }
         .calendar-grid-day-cell.empty-day { background-color: #f9fafb; } 
 
         /* Styles for past and current dates */
@@ -285,6 +299,12 @@
         
         .past-date.empty-day { 
             background-color: #f8f9fa; /* Ensure empty past days are consistent if they were already gray */
+        }
+        
+        /* Past event specific styling */
+        .past-event {
+            position: relative;
+            border-left: 2px dotted rgba(107, 114, 128, 0.4); /* Subtle dotted border */
         }
 
         .current-date { 
@@ -307,6 +327,33 @@
             /* margin-right: auto; /* Inherited */
         }
         /* End of styles for past and current dates */
+
+        /* Today's date highlight with enhanced pill styling */
+        .calendar-grid-day-cell.today {
+            box-shadow: 0 0 0 2px var(--navy-primary);
+            border-radius: 0.5rem;
+            z-index: 5; /* Higher z-index to ensure today appears above weekend pills */
+            position: relative;
+        }
+        .today .day-number-wrapper {
+            background-color: var(--navy-primary);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+        }
+        /* Ensures weekend pill doesn't break today's highlight */
+        .calendar-grid-day-cell.today.weekend {
+            border-radius: 0.5rem !important;
+            /* Overrides to ensure today styling takes precedence */
+            border-left: 2px solid var(--navy-primary) !important;
+            border-right: 2px solid var(--navy-primary) !important;
+            border-top: 2px solid var(--navy-primary) !important;
+            border-bottom: 2px solid var(--navy-primary) !important;
+            box-shadow: none;
+            /* Special background for weekend+today */
+            background-color: rgba(3, 6, 69, 0.05); /* --navy-light-lighter or --navy-hover */
+        }
 
         .legend-item { display: inline-flex; align-items: center; font-size: 0.75rem; margin-right: 1rem; margin-bottom: 0.25rem; }
         .legend-color { 
@@ -1064,7 +1111,8 @@
                     cabinCrewPublish: true,
                     publicHoliday: true,
                     // New event visibilities
-                    trainingHandover: true,
+                    trainingHandoverTech: true,
+                    trainingHandoverCabin: true,
                     cbPairingPublishTech: true,
                     cbPairingPublishCabin: true,
                     biddingClosureTech: true,
@@ -1079,11 +1127,13 @@
                 techCrewPublishOffset: 10, 
                 cabinCrewPublishOffset: 7,
                 // New Calculation Parameters
-                trainingHandoverOffset: 7,       // Default: 7 calendar days after SSIM Handover
-                cbPairingPublishTechOffset: 2,   // Default: 2 working days before Bidding Closure Tech
-                biddingClosureTechOffset: 1,     // Default: 1 calendar day before Roster Build Commence Tech
-                rosterBuildCommenceTechOffset: 12, // Default: 12 calendar days before Tech Crew Publish
-                rosterBuildCommenceCabinOffset: 16,// Default: 16 calendar days before Cabin Crew Publish
+                trainingHandoverOffset: 7,          // Default: 7 calendar days AFTER Final SSIM Handover
+                cbPairingPublishTechOffset: -5,     // Default: 5 working days BEFORE Bidding Closure Tech
+                cbPairingPublishCabinOffset: -5,    // Default: 5 working days BEFORE Bidding Closure Cabin
+                biddingClosureTechOffset: -5,       // Default: 5 calendar days BEFORE Roster Build Commence Tech
+                biddingClosureCabinOffset: -5,      // Default: 5 calendar days BEFORE Roster Build Commence Cabin
+                rosterBuildCommenceTechOffset: -5,  // Default: 5 calendar days BEFORE Tech Crew Publish
+                rosterBuildCommenceCabinOffset: -5, // Default: 5 calendar days BEFORE Cabin Crew Publish
                 colors: {
                     planning: '#e0f2fe',
                     publish: '#fef9c3',
@@ -1103,11 +1153,12 @@
                     techCrewPublish: 'Tech Pub (%M)',
                     cabinCrewPublish: 'Cabin Pub (%M)',
                     // New event header names
-                    trainingHandover: 'Train H/O (%M)',
+                    trainingHandoverTech: 'Train H/O Tech (%M)',
+                    trainingHandoverCabin: 'Train H/O Cabin (%M)',
                     cbPairingPublishTech: 'CB Pub Tech (%M)',
                     cbPairingPublishCabin: 'CB Pub Cabin (%M)',
                     biddingClosureTech: 'Bid Close Tech (%M)',
-                    biddingClosureCabin: 'Bid Close Cabin', // No (%M)
+                    biddingClosureCabin: 'Bid Close Cabin (%M)', // Added (%M) placeholder
                     rosterBuildCommenceTech: 'RosterBuild Tech (%M)',
                     rosterBuildCommenceCabin: 'RosterBuild Cabin (%M)'
                 }
@@ -1534,7 +1585,7 @@
 
         function isWeekend(date) { // Input is Date object
             const day = date.getUTCDay();
-            return day === SATURDAY || day === SUNDAY;
+            return day === 6 || day === 0; // 6 for Saturday, 0 for Sunday
         }
 
         function isPublicHoliday(date) { // Input is Date object
@@ -2279,7 +2330,7 @@ function autoAddAndCalculateNextBidPeriod() {
                         if (normalizedActualCellDate.getTime() < todayUTC.getTime()) {
                             dayCell.classList.add('past-date');
                         } else if (normalizedActualCellDate.getTime() === todayUTC.getTime()) {
-                            dayCell.classList.add('current-date');
+                            dayCell.classList.add('today');
                         }
 
                         const eventsWrapper = document.createElement('div'); eventsWrapper.className = 'events-wrapper';
@@ -2312,6 +2363,15 @@ function autoAddAndCalculateNextBidPeriod() {
 
                                             const eventTextDiv = document.createElement('div'); 
                                             eventTextDiv.className = 'event-text-in-cell';
+                                            
+                                            // Check if this is a past event (before today)
+                                            const isPastEvent = eventDate.getTime() < todayUTC.getTime();
+                                            
+                                            // Apply opacity styling for past events
+                                            if (isPastEvent) {
+                                                eventTextDiv.style.opacity = '0.6'; // Reduced opacity for past events
+                                                eventTextDiv.classList.add('past-event'); // Add class for potential additional styling
+                                            }
                                             // For display in cell, use the HTML version if needed (for abbr span)
                                             let actualLabelHtmlInCell;
                                              if (baseLabel.includes('%M')) {
@@ -2331,6 +2391,15 @@ function autoAddAndCalculateNextBidPeriod() {
                                     }
                                 } else if (eventDate) {
                                      console.warn(`DEBUG: renderCalendarView - Invalid or non-Date object for ${eventTypeKey} in period ${period.bidPeriodName}:`, eventDate);
+                                     // Try to fix invalid date objects
+                                     if (typeof eventDate === 'string' || eventDate instanceof String) {
+                                        try {
+                                            period[eventTypeKey] = new Date(eventDate);
+                                            console.log(`Attempted to fix ${eventTypeKey} date for ${period.bidPeriodName}`);
+                                        } catch (e) {
+                                            console.error(`Failed to convert string to date for ${eventTypeKey}:`, e);
+                                        }
+                                     }
                                 }
                             });
                         });
@@ -2965,12 +3034,27 @@ Cabin Publish: ${formatDate(finalCabinCrewPublishDate)}`;
 
             const updatedData = allBidPeriodData.map(period => {
                 if (period.rosterStart.getTime() >= today.getTime() || settingsChanged) {
-                    let newSpCutoffDate = period.spCutoff; 
+                    // Create a fresh period object with all necessary properties
+                    const updatedPeriod = {
+                        ...period,
+                        // Initialize new event types if they don't exist
+                        trainingHandoverTech: period.trainingHandoverTech || null,
+                        trainingHandoverCabin: period.trainingHandoverCabin || null,
+                        rosterBuildCommenceTech: period.rosterBuildCommenceTech || null,
+                        rosterBuildCommenceCabin: period.rosterBuildCommenceCabin || null,
+                        biddingClosureTech: period.biddingClosureTech || null,
+                        biddingClosureCabin: period.biddingClosureCabin || null,
+                        cbPairingPublishTech: period.cbPairingPublishTech || null,
+                        cbPairingPublishCabin: period.cbPairingPublishCabin || null
+                    };
+                    
+                    // Calculate base dates
+                    let newSpCutoffDate = updatedPeriod.spCutoff; 
                     if (settingsChanged) { 
-                        const rosterStartDateForSP = period.rosterStart;
+                        const rosterStartDateForSP = updatedPeriod.rosterStart;
                         let spCutoffSuggestion;
 
-                        if (period.bidPeriodName.startsWith("Feb-")) { // Special rule for Feb
+                        if (updatedPeriod.bidPeriodName.startsWith("Feb-")) { // Special rule for Feb
                             spCutoffSuggestion = new Date(Date.UTC(rosterStartDateForSP.getUTCFullYear(), monthMap['Dec'] -12, appSettings.spCutoffRule.day));
                         } else {
                             spCutoffSuggestion = new Date(Date.UTC(rosterStartDateForSP.getUTCFullYear(), rosterStartDateForSP.getUTCMonth() - appSettings.spCutoffRule.monthsPrior, appSettings.spCutoffRule.day));
@@ -2991,46 +3075,133 @@ Cabin Publish: ${formatDate(finalCabinCrewPublishDate)}`;
                         newSpCutoffDate = spCutoffSuggestion;
                     }
 
-
-                    const spFeedbackDate = addWorkingDays(formatDateForCalc(newSpCutoffDate), appSettings.spFeedbackOffset);
-                    const tradeOffDiscussionDate = addWorkingDays(formatDateForCalc(spFeedbackDate), appSettings.tradeOffOffset);
-                    let finalSSIMHandoverDate = addWorkingDays(formatDateForCalc(tradeOffDiscussionDate), appSettings.ssimHandoverOffset);
-                    if (appSettings.ssimFridayRule && finalSSIMHandoverDate.getUTCDay() === FRIDAY) {
-                        let prevDay = new Date(finalSSIMHandoverDate.getTime()); prevDay.setUTCDate(prevDay.getUTCDate() - 1);
-                        finalSSIMHandoverDate = getFinalAdjustedDate(formatDateForCalc(prevDay));
+                    updatedPeriod.spCutoff = newSpCutoffDate;
+                    updatedPeriod.spFeedback = addWorkingDays(formatDateForCalc(newSpCutoffDate), appSettings.spFeedbackOffset);
+                    updatedPeriod.tradeOffDiscussion = addWorkingDays(formatDateForCalc(updatedPeriod.spFeedback), appSettings.tradeOffOffset);
+                    updatedPeriod.finalSSIMHandover = addWorkingDays(formatDateForCalc(updatedPeriod.tradeOffDiscussion), appSettings.ssimHandoverOffset);
+                    
+                    if (appSettings.ssimFridayRule && updatedPeriod.finalSSIMHandover.getUTCDay() === FRIDAY) {
+                        let prevDay = new Date(updatedPeriod.finalSSIMHandover.getTime()); 
+                        prevDay.setUTCDate(prevDay.getUTCDate() - 1);
+                        updatedPeriod.finalSSIMHandover = getFinalAdjustedDate(formatDateForCalc(prevDay));
                     }
-                    const eomPriorRoster = getEOMPriorRoster(formatDateForCalc(period.rosterStart));
-                    const baseTechCrewPublishDate = new Date(eomPriorRoster.getTime()); baseTechCrewPublishDate.setUTCDate(baseTechCrewPublishDate.getUTCDate() - appSettings.techCrewPublishOffset);
-                    const finalTechCrewPublishDate = getFinalAdjustedDate(formatDateForCalc(baseTechCrewPublishDate));
-                    const baseCabinCrewPublishDate = new Date(eomPriorRoster.getTime()); baseCabinCrewPublishDate.setUTCDate(baseCabinCrewPublishDate.getUTCDate() - appSettings.cabinCrewPublishOffset);
-                    const finalCabinCrewPublishDate = getFinalAdjustedDate(formatDateForCalc(baseCabinCrewPublishDate));
+                    
+                    const eomPriorRoster = getEOMPriorRoster(formatDateForCalc(updatedPeriod.rosterStart));
+                    
+                    // Tech/Cabin Crew Publish dates
+                    const baseTechCrewPublishDate = new Date(eomPriorRoster.getTime());
+                    baseTechCrewPublishDate.setUTCDate(baseTechCrewPublishDate.getUTCDate() - appSettings.techCrewPublishOffset);
+                    updatedPeriod.techCrewPublish = getFinalAdjustedDate(formatDateForCalc(baseTechCrewPublishDate));
+                    
+                    const baseCabinCrewPublishDate = new Date(eomPriorRoster.getTime());
+                    baseCabinCrewPublishDate.setUTCDate(baseCabinCrewPublishDate.getUTCDate() - appSettings.cabinCrewPublishOffset);
+                    updatedPeriod.cabinCrewPublish = getFinalAdjustedDate(formatDateForCalc(baseCabinCrewPublishDate));
 
-                    const periodEventDates = [newSpCutoffDate, spFeedbackDate, tradeOffDiscussionDate, finalSSIMHandoverDate, finalTechCrewPublishDate, finalCabinCrewPublishDate].filter(Boolean);
-                    const earliestEvent = new Date(Math.min(...periodEventDates.map(d => d.getTime())));
-                    const latestEvent = new Date(Math.max(...periodEventDates.map(d => d.getTime())));
-                    const affectedHolidaysList = [];
-                    if (earliestEvent && latestEvent && !isNaN(earliestEvent.getTime()) && !isNaN(latestEvent.getTime())) {
-                        for (let d = new Date(earliestEvent); d <= latestEvent; d.setUTCDate(d.getUTCDate() + 1)) {
-                            const dStr = formatDateForCalc(new Date(d));
-                            if (melbournePublicHolidays.some(h => h.date === dStr)) {
-                                affectedHolidaysList.push({date: dStr, name: getPublicHolidayName(dStr)});
+                    // Now calculate all the new event types
+                    
+                    // 1. Training Handover
+                    if (appSettings.trainingHandoverOffset !== undefined && updatedPeriod.finalSSIMHandover) {
+                        const trainingHandoverDate = new Date(updatedPeriod.finalSSIMHandover.getTime());
+                        trainingHandoverDate.setUTCDate(trainingHandoverDate.getUTCDate() + appSettings.trainingHandoverOffset);
+                        updatedPeriod.trainingHandoverTech = normalizeToUTCMidnight(trainingHandoverDate);
+                        updatedPeriod.trainingHandoverCabin = normalizeToUTCMidnight(new Date(trainingHandoverDate.getTime()));
+                    }
+                    
+                    // 2. Roster Build Commence
+                    if (appSettings.rosterBuildCommenceTechOffset !== undefined && updatedPeriod.techCrewPublish) {
+                        const rosterBuildCommenceTech = new Date(updatedPeriod.techCrewPublish.getTime());
+                        rosterBuildCommenceTech.setUTCDate(rosterBuildCommenceTech.getUTCDate() + appSettings.rosterBuildCommenceTechOffset);
+                        updatedPeriod.rosterBuildCommenceTech = normalizeToUTCMidnight(rosterBuildCommenceTech);
+                    }
+                    
+                    if (appSettings.rosterBuildCommenceCabinOffset !== undefined && updatedPeriod.cabinCrewPublish) {
+                        const rosterBuildCommenceCabin = new Date(updatedPeriod.cabinCrewPublish.getTime());
+                        rosterBuildCommenceCabin.setUTCDate(rosterBuildCommenceCabin.getUTCDate() + appSettings.rosterBuildCommenceCabinOffset);
+                        updatedPeriod.rosterBuildCommenceCabin = normalizeToUTCMidnight(rosterBuildCommenceCabin);
+                    }
+                    
+                    // 3. Bidding Closure
+                    if (appSettings.biddingClosureTechOffset !== undefined && updatedPeriod.rosterBuildCommenceTech) {
+                        const biddingClosureTech = new Date(updatedPeriod.rosterBuildCommenceTech.getTime());
+                        biddingClosureTech.setUTCDate(biddingClosureTech.getUTCDate() + appSettings.biddingClosureTechOffset);
+                        updatedPeriod.biddingClosureTech = normalizeToUTCMidnight(biddingClosureTech);
+                    }
+                    
+                    if (appSettings.biddingClosureCabinOffset !== undefined && updatedPeriod.rosterBuildCommenceCabin) {
+                        const biddingClosureCabin = new Date(updatedPeriod.rosterBuildCommenceCabin.getTime());
+                        biddingClosureCabin.setUTCDate(biddingClosureCabin.getUTCDate() + appSettings.biddingClosureCabinOffset);
+                        updatedPeriod.biddingClosureCabin = normalizeToUTCMidnight(biddingClosureCabin);
+                    }
+                    
+                    // 4. CB Pairing Publish
+                    if (appSettings.cbPairingPublishTechOffset !== undefined && updatedPeriod.biddingClosureTech) {
+                        updatedPeriod.cbPairingPublishTech = normalizeToUTCMidnight(
+                            addWorkingDays(formatDateForCalc(updatedPeriod.biddingClosureTech), appSettings.cbPairingPublishTechOffset)
+                        );
+                    }
+                    
+                    if (appSettings.cbPairingPublishCabinOffset !== undefined && updatedPeriod.biddingClosureCabin) {
+                        updatedPeriod.cbPairingPublishCabin = normalizeToUTCMidnight(
+                            addWorkingDays(formatDateForCalc(updatedPeriod.biddingClosureCabin), appSettings.cbPairingPublishCabinOffset)
+                        );
+                    }
+                    
+                    // Calculate affected holidays
+                    const allEventDates = [
+                        updatedPeriod.spCutoff, 
+                        updatedPeriod.spFeedback, 
+                        updatedPeriod.tradeOffDiscussion, 
+                        updatedPeriod.finalSSIMHandover, 
+                        updatedPeriod.techCrewPublish, 
+                        updatedPeriod.cabinCrewPublish,
+                        updatedPeriod.trainingHandoverTech,
+                        updatedPeriod.trainingHandoverCabin,
+                        updatedPeriod.rosterBuildCommenceTech,
+                        updatedPeriod.rosterBuildCommenceCabin,
+                        updatedPeriod.biddingClosureTech,
+                        updatedPeriod.biddingClosureCabin,
+                        updatedPeriod.cbPairingPublishTech,
+                        updatedPeriod.cbPairingPublishCabin
+                    ].filter(Boolean);
+                    
+                    if (allEventDates.length > 0) {
+                        const earliestEvent = new Date(Math.min(...allEventDates.map(d => d.getTime())));
+                        const latestEvent = new Date(Math.max(...allEventDates.map(d => d.getTime())));
+                        const affectedHolidaysList = [];
+                        
+                        if (earliestEvent && latestEvent && !isNaN(earliestEvent.getTime()) && !isNaN(latestEvent.getTime())) {
+                            for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+                const cellDate = new Date(d);
+                const dateKey = formatDateForCalc(cellDate);
+                const dayNumber = cellDate.getDate();
+                const dayOfWeek = cellDate.getDay(); // 0 = Sunday, 6 = Saturday
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                const isPastDate = isPastDateFn(cellDate);
+                const isToday = isTodayFn(cellDate);
+                const isCurrentMonth = cellDate.getUTCMonth() === month;
+                const monthClass = isCurrentMonth ? 'current-month' : 'other-month';
+                const weekendClass = isWeekend ? 'weekend' : '';
+                const todayClass = isToday ? 'today' : '';
+                const pastDateClass = isPastDate ? 'past-date' : '';
+                
+                const dayCell = document.createElement('div');
+                dayCell.className = `calendar-grid-day-cell ${monthClass} ${weekendClass} ${todayClass} ${pastDateClass} empty-day`;
+                // Add data-day attribute for weekend pill styling
+                dayCell.setAttribute('data-day', dayOfWeek);
+                const dStr = formatDateForCalc(new Date(d));
+                if (melbournePublicHolidays.some(h => h.date === dStr)) {
+                    affectedHolidaysList.push({date: dStr, name: getPublicHolidayName(dStr)});
+                }
                             }
                         }
+                        updatedPeriod.affectedHolidays = affectedHolidaysList;
                     }
-
-                    return {
-                        ...period, 
-                        spCutoff: newSpCutoffDate,
-                        spFeedback: spFeedbackDate,
-                        tradeOffDiscussion: tradeOffDiscussionDate,
-                        finalSSIMHandover: finalSSIMHandoverDate,
-                        techCrewPublish: finalTechCrewPublishDate,
-                        cabinCrewPublish: finalCabinCrewPublishDate,
-                        affectedHolidays: affectedHolidaysList
-                    };
+                    
+                    return updatedPeriod;
                 }
                 return period; 
             });
+            
             allBidPeriodData = updatedData;
             renderResultsTable();
             renderCalendarView();
@@ -3316,88 +3487,111 @@ Cabin Publish: ${formatDate(finalCabinCrewPublishDate)}`;
             const baseTechCrewPublishDate = new Date(eomPriorRoster.getTime());
             baseTechCrewPublishDate.setUTCDate(baseTechCrewPublishDate.getUTCDate() - appSettings.techCrewPublishOffset);
             period.techCrewPublish = getFinalAdjustedDate(formatDateForCalc(baseTechCrewPublishDate));
-
-            const baseCabinCrewPublishDate = new Date(eomPriorRoster.getTime());
-            baseCabinCrewPublishDate.setUTCDate(baseCabinCrewPublishDate.getUTCDate() - appSettings.cabinCrewPublishOffset);
-            period.cabinCrewPublish = getFinalAdjustedDate(formatDateForCalc(baseCabinCrewPublishDate));
+            
+            // Calculate Cabin Crew Publish date (if not already set)
+            if (!period.cabinCrewPublish && appSettings.cabinCrewPublishOffset !== undefined) {
+                const baseCabinCrewPublishDate = new Date(eomPriorRoster.getTime());
+                baseCabinCrewPublishDate.setUTCDate(baseCabinCrewPublishDate.getUTCDate() - appSettings.cabinCrewPublishOffset);
+                period.cabinCrewPublish = getFinalAdjustedDate(formatDateForCalc(baseCabinCrewPublishDate));
+            }
 
             // --- New Event Type Calculations ---
             
-            // 1. Training Handover (Tech & Cabin) - 7 working days after SSIM Handover
-            if (appSettings.trainingHandoverOffset !== undefined) {
-                period.trainingHandoverTech = normalizeToUTCMidnight(
-                    addWorkingDays(formatDateForCalc(period.finalSSIMHandover), appSettings.trainingHandoverOffset)
-                );
-                // Cabin uses same calculation as Tech for Training Handover
-                period.trainingHandoverCabin = new Date(period.trainingHandoverTech);
+            // 1. Training Handover (Tech & Cabin) - calendar days from Final SSIM Handover
+            if (appSettings.trainingHandoverOffset !== undefined && period.finalSSIMHandover) {
+                const trainingHandoverDate = new Date(period.finalSSIMHandover.getTime());
+                trainingHandoverDate.setUTCDate(trainingHandoverDate.getUTCDate() + appSettings.trainingHandoverOffset);
+                period.trainingHandoverTech = normalizeToUTCMidnight(trainingHandoverDate);
+                period.trainingHandoverCabin = normalizeToUTCMidnight(new Date(trainingHandoverDate.getTime()));
+                
+                // Validate the date objects
+                if (!(period.trainingHandoverTech instanceof Date) || isNaN(period.trainingHandoverTech.getTime())) {
+                    console.error(`calculateDatesForPeriod: Invalid trainingHandoverTech date calculated for ${period.bidPeriodName}:`, period.trainingHandoverTech);
+                    period.trainingHandoverTech = new Date(period.finalSSIMHandover); // Fallback to a safe date
+                }
+                
+                if (!(period.trainingHandoverCabin instanceof Date) || isNaN(period.trainingHandoverCabin.getTime())) {
+                    console.error(`calculateDatesForPeriod: Invalid trainingHandoverCabin date calculated for ${period.bidPeriodName}:`, period.trainingHandoverCabin);
+                    period.trainingHandoverCabin = new Date(period.finalSSIMHandover); // Fallback to a safe date
+                }
             }
-
-            // 2. Roster Build Commence (Tech) - 12 working days before Tech Crew Publish
-            if (appSettings.rosterBuildCommenceTechOffset !== undefined) {
-                const rosterBuildCommenceTech = new Date(period.techCrewPublish);
+            
+            // 2. Roster Build Commence (Tech) - calendar days from Tech Crew Publish
+            if (appSettings.rosterBuildCommenceTechOffset !== undefined && period.techCrewPublish) {
+                const rosterBuildCommenceTech = new Date(period.techCrewPublish.getTime());
                 rosterBuildCommenceTech.setUTCDate(rosterBuildCommenceTech.getUTCDate() + appSettings.rosterBuildCommenceTechOffset);
-                period.rosterBuildCommenceTech = getFinalAdjustedDate(formatDateForCalc(rosterBuildCommenceTech));
+                period.rosterBuildCommenceTech = normalizeToUTCMidnight(rosterBuildCommenceTech);
+                
+                // Validate the date object
+                if (!(period.rosterBuildCommenceTech instanceof Date) || isNaN(period.rosterBuildCommenceTech.getTime())) {
+                    console.error(`calculateDatesForPeriod: Invalid rosterBuildCommenceTech date calculated for ${period.bidPeriodName}:`, period.rosterBuildCommenceTech);
+                    period.rosterBuildCommenceTech = new Date(period.techCrewPublish); // Fallback to a safe date
+                }
             }
-
-            // 3. Bidding Closure (Tech) - 1 working day before Roster Build Commence (Tech)
+            
+            // 3. Roster Build Commence (Cabin) - calendar days from Cabin Crew Publish
+            if (appSettings.rosterBuildCommenceCabinOffset !== undefined && period.cabinCrewPublish) {
+                const rosterBuildCommenceCabin = new Date(period.cabinCrewPublish.getTime());
+                rosterBuildCommenceCabin.setUTCDate(rosterBuildCommenceCabin.getUTCDate() + appSettings.rosterBuildCommenceCabinOffset);
+                period.rosterBuildCommenceCabin = normalizeToUTCMidnight(rosterBuildCommenceCabin);
+                
+                // Validate the date object
+                if (!(period.rosterBuildCommenceCabin instanceof Date) || isNaN(period.rosterBuildCommenceCabin.getTime())) {
+                    console.error(`calculateDatesForPeriod: Invalid rosterBuildCommenceCabin date calculated for ${period.bidPeriodName}:`, period.rosterBuildCommenceCabin);
+                    period.rosterBuildCommenceCabin = new Date(period.cabinCrewPublish); // Fallback to a safe date
+                }
+            }
+            
+            // 4. Bidding Closure (Tech) - calendar days from Roster Build Commence Tech
             if (appSettings.biddingClosureTechOffset !== undefined && period.rosterBuildCommenceTech) {
-                period.biddingClosureTech = normalizeToUTCMidnight(
-                    addWorkingDays(formatDateForCalc(period.rosterBuildCommenceTech), appSettings.biddingClosureTechOffset)
-                );
+                const biddingClosureTech = new Date(period.rosterBuildCommenceTech.getTime());
+                biddingClosureTech.setUTCDate(biddingClosureTech.getUTCDate() + appSettings.biddingClosureTechOffset);
+                period.biddingClosureTech = normalizeToUTCMidnight(biddingClosureTech);
+                
+                // Validate the date object
+                if (!(period.biddingClosureTech instanceof Date) || isNaN(period.biddingClosureTech.getTime())) {
+                    console.error(`calculateDatesForPeriod: Invalid biddingClosureTech date calculated for ${period.bidPeriodName}:`, period.biddingClosureTech);
+                    period.biddingClosureTech = new Date(period.rosterBuildCommenceTech); // Fallback to a safe date
+                }
             }
-
-            // 4. CB Pairing Publish (Tech) - 2 working days before Bidding Closure (Tech)
+            
+            // 5. Bidding Closure (Cabin) - calendar days from Roster Build Commence Cabin
+            if (appSettings.biddingClosureCabinOffset !== undefined && period.rosterBuildCommenceCabin) {
+                const biddingClosureCabin = new Date(period.rosterBuildCommenceCabin.getTime());
+                biddingClosureCabin.setUTCDate(biddingClosureCabin.getUTCDate() + appSettings.biddingClosureCabinOffset);
+                period.biddingClosureCabin = normalizeToUTCMidnight(biddingClosureCabin);
+                
+                // Validate the date object
+                if (!(period.biddingClosureCabin instanceof Date) || isNaN(period.biddingClosureCabin.getTime())) {
+                    console.error(`calculateDatesForPeriod: Invalid biddingClosureCabin date calculated for ${period.bidPeriodName}:`, period.biddingClosureCabin);
+                    period.biddingClosureCabin = new Date(period.rosterBuildCommenceCabin); // Fallback to a safe date
+                }
+            }
+            
+            // 6. CB Pairing Publish (Tech) - working days from Bidding Closure Tech
             if (appSettings.cbPairingPublishTechOffset !== undefined && period.biddingClosureTech) {
                 period.cbPairingPublishTech = normalizeToUTCMidnight(
                     addWorkingDays(formatDateForCalc(period.biddingClosureTech), appSettings.cbPairingPublishTechOffset)
                 );
-            }
-
-            // 5. Bidding Closure (Cabin) - First Tuesday of the month
-            if (appSettings.biddingClosureCabinDay === 'first-tuesday') {
-                const rosterStart = new Date(period.rosterStart);
-                const firstDayOfMonth = new Date(Date.UTC(rosterStart.getUTCFullYear(), rosterStart.getUTCMonth(), 1));
-                let firstTuesday = new Date(firstDayOfMonth);
                 
-                // Find first Tuesday
-                while (firstTuesday.getUTCDay() !== 2) { // 2 = Tuesday
-                    firstTuesday.setUTCDate(firstTuesday.getUTCDate() + 1);
-                }
-                
-                period.biddingClosureCabin = normalizeToUTCMidnight(firstTuesday);
-                
-                // If it's a holiday, move to previous working day
-                while (isPublicHoliday(period.biddingClosureCabin) || isWeekend(period.biddingClosureCabin)) {
-                    period.biddingClosureCabin.setUTCDate(period.biddingClosureCabin.getUTCDate() - 1);
-                    period.biddingClosureCabin = normalizeToUTCMidnight(period.biddingClosureCabin);
+                // Validate the date object
+                if (!(period.cbPairingPublishTech instanceof Date) || isNaN(period.cbPairingPublishTech.getTime())) {
+                    console.error(`calculateDatesForPeriod: Invalid cbPairingPublishTech date calculated for ${period.bidPeriodName}:`, period.cbPairingPublishTech);
+                    period.cbPairingPublishTech = new Date(period.biddingClosureTech); // Fallback to a safe date
                 }
             }
-
-            // 6. CB Pairing Publish (Cabin) - Last Friday of the month
-            if (appSettings.cbPairingPublishCabinDay === 'last-friday') {
-                const rosterStart = new Date(period.rosterStart);
-                const lastDayOfMonth = new Date(Date.UTC(rosterStart.getUTCFullYear(), rosterStart.getUTCMonth() + 1, 0));
-                let lastFriday = new Date(lastDayOfMonth);
+            
+            // 7. CB Pairing Publish (Cabin) - working days from Bidding Closure Cabin
+            if (appSettings.cbPairingPublishCabinOffset !== undefined && period.biddingClosureCabin) {
+                period.cbPairingPublishCabin = normalizeToUTCMidnight(
+                    addWorkingDays(formatDateForCalc(period.biddingClosureCabin), appSettings.cbPairingPublishCabinOffset)
+                );
                 
-                // Find last Friday
-                while (lastFriday.getUTCDay() !== 5) { // 5 = Friday
-                    lastFriday.setUTCDate(lastFriday.getUTCDate() - 1);
+                // Validate the date object
+                if (!(period.cbPairingPublishCabin instanceof Date) || isNaN(period.cbPairingPublishCabin.getTime())) {
+                    console.error(`calculateDatesForPeriod: Invalid cbPairingPublishCabin date calculated for ${period.bidPeriodName}:`, period.cbPairingPublishCabin);
+                    period.cbPairingPublishCabin = new Date(period.biddingClosureCabin); // Fallback to a safe date
                 }
-                
-                period.cbPairingPublishCabin = normalizeToUTCMidnight(lastFriday);
-                
-                // If it's a holiday, move to previous working day
-                while (isPublicHoliday(period.cbPairingPublishCabin) || isWeekend(period.cbPairingPublishCabin)) {
-                    period.cbPairingPublishCabin.setUTCDate(period.cbPairingPublishCabin.getUTCDate() - 1);
-                    period.cbPairingPublishCabin = normalizeToUTCMidnight(period.cbPairingPublishCabin);
-                }
-            }
-
-            // 7. Roster Build Commence (Cabin) - 16 working days before Cabin Crew Publish
-            if (appSettings.rosterBuildCommenceCabinOffset !== undefined) {
-                const rosterBuildCommenceCabin = new Date(period.cabinCrewPublish);
-                rosterBuildCommenceCabin.setUTCDate(rosterBuildCommenceCabin.getUTCDate() + appSettings.rosterBuildCommenceCabinOffset);
-                period.rosterBuildCommenceCabin = getFinalAdjustedDate(formatDateForCalc(rosterBuildCommenceCabin));
             }
 
             // Apply No Overlap Rule if enabled
@@ -3432,12 +3626,23 @@ Cabin Publish: ${formatDate(finalCabinCrewPublishDate)}`;
                 bidPeriodName: bidPeriodName,
                 rosterStart: normalizeToUTCMidnight(rosterStartDate),
                 rosterEnd: normalizeToUTCMidnight(rosterEndDate),
+                // Original event types
                 spCutoff: null,
                 spFeedback: null,
                 tradeOffDiscussion: null,
                 finalSSIMHandover: null,
                 techCrewPublish: null,
                 cabinCrewPublish: null,
+                // New event types
+                trainingHandoverTech: null,
+                trainingHandoverCabin: null,
+                rosterBuildCommenceTech: null,
+                rosterBuildCommenceCabin: null,
+                biddingClosureTech: null,
+                biddingClosureCabin: null,
+                cbPairingPublishTech: null,
+                cbPairingPublishCabin: null,
+                // Other properties
                 affectedHolidays: [],
                 approvalStatus: isStatic ? "Approved" : "Pending", // Set approval status
                 isStaticOrigin: isStatic // Mark if it's from static data
@@ -3662,29 +3867,40 @@ Cabin Publish: ${formatDate(finalCabinCrewPublishDate)}`;
                         // Ensure date objects are created, and handle potential old 'startDate'/'endDate'
                         rosterStart: period.rosterStart ? new Date(period.rosterStart) : (period.startDate ? new Date(period.startDate) : null),
                         rosterEnd: period.rosterEnd ? new Date(period.rosterEnd) : (period.endDate ? new Date(period.endDate) : null),
+                        // Original event types
                         spCutoff: period.spCutoff ? new Date(period.spCutoff) : null,
                         spFeedback: period.spFeedback ? new Date(period.spFeedback) : null,
                         tradeOffDiscussion: period.tradeOffDiscussion ? new Date(period.tradeOffDiscussion) : null,
                         finalSSIMHandover: period.finalSSIMHandover ? new Date(period.finalSSIMHandover) : null,
                         techCrewPublish: period.techCrewPublish ? new Date(period.techCrewPublish) : null,
                         cabinCrewPublish: period.cabinCrewPublish ? new Date(period.cabinCrewPublish) : null,
+                        // New event types from Phase 2
+                        trainingHandoverTech: period.trainingHandoverTech ? new Date(period.trainingHandoverTech) : null,
+                        trainingHandoverCabin: period.trainingHandoverCabin ? new Date(period.trainingHandoverCabin) : null,
+                        rosterBuildCommenceTech: period.rosterBuildCommenceTech ? new Date(period.rosterBuildCommenceTech) : null,
+                        rosterBuildCommenceCabin: period.rosterBuildCommenceCabin ? new Date(period.rosterBuildCommenceCabin) : null,
+                        biddingClosureTech: period.biddingClosureTech ? new Date(period.biddingClosureTech) : null,
+                        biddingClosureCabin: period.biddingClosureCabin ? new Date(period.biddingClosureCabin) : null,
+                        cbPairingPublishTech: period.cbPairingPublishTech ? new Date(period.cbPairingPublishTech) : null,
+                        cbPairingPublishCabin: period.cbPairingPublishCabin ? new Date(period.cbPairingPublishCabin) : null,
+                        // Other properties
                         approvalStatus: period.approvalStatus || "Pending", // Load approval status, default to Pending
                         isStaticOrigin: period.isStaticOrigin || false // Load isStaticOrigin, default to false
                     }));
                     console.log('DEBUG: loadInitialData - Mapped allBidPeriodData from localStorage:', JSON.parse(JSON.stringify(allBidPeriodData)));
                 } catch (e) {
-                console.error('Error loading saved data:', e);
-                showToast('Error loading saved data. Initializing with defaults.', 3000);
-                allBidPeriodData = []; // Clear any partially loaded data
-                initializeDefaultPeriods(); // Load static data as a fallback
+                    console.error('Error loading saved data:', e);
+                    showToast('Error loading saved data. Initializing with defaults.', 3000);
+                    allBidPeriodData = []; // Clear any partially loaded data
+                    initializeDefaultPeriods(); // Load static data as a fallback
+                    saveBidPeriodData(); // Save the newly initialized default data
+                }
+            } else {
+                console.log('DEBUG: loadInitialData - No data in localStorage, calling initializeDefaultPeriods to load static data.');
+                allBidPeriodData = []; // Ensure it's empty before loading defaults
+                initializeDefaultPeriods(); // Load static data
                 saveBidPeriodData(); // Save the newly initialized default data
             }
-        } else {
-            console.log('DEBUG: loadInitialData - No data in localStorage, calling initializeDefaultPeriods to load static data.');
-            allBidPeriodData = []; // Ensure it's empty before loading defaults
-            initializeDefaultPeriods(); // Load static data
-            saveBidPeriodData(); // Save the newly initialized default data
-        }
 
         // Ensure allBidPeriodData is sorted after loading from localStorage or defaults
         allBidPeriodData.sort((a, b) => {
@@ -3692,6 +3908,53 @@ Cabin Publish: ${formatDate(finalCabinCrewPublishDate)}`;
                 return a.rosterStart.getTime() - b.rosterStart.getTime();
             });
 
+            // Ensure all event types are calculated for all periods
+            allBidPeriodData.forEach(period => {
+                if (period.finalSSIMHandover) {
+                    // Force recalculation of all events that might be missing
+                    if (!period.trainingHandoverTech || !period.trainingHandoverCabin) {
+                        console.log(`Recalculating missing Training Handover events for ${period.bidPeriodName}`);
+                        // Training Handover calculation
+                        const trainingHandoverDate = new Date(period.finalSSIMHandover.getTime());
+                        trainingHandoverDate.setUTCDate(trainingHandoverDate.getUTCDate() + appSettings.trainingHandoverOffset);
+                        period.trainingHandoverTech = normalizeToUTCMidnight(trainingHandoverDate);
+                        period.trainingHandoverCabin = normalizeToUTCMidnight(new Date(trainingHandoverDate.getTime()));
+                    }
+                }
+                
+                if (period.techCrewPublish) {
+                    // Force recalculation of Tech roster build if missing
+                    if (!period.rosterBuildCommenceTech) {
+                        console.log(`Recalculating missing Roster Build Tech event for ${period.bidPeriodName}`);
+                        const rosterBuildCommenceTech = new Date(period.techCrewPublish.getTime());
+                        rosterBuildCommenceTech.setUTCDate(rosterBuildCommenceTech.getUTCDate() + appSettings.rosterBuildCommenceTechOffset);
+                        period.rosterBuildCommenceTech = normalizeToUTCMidnight(rosterBuildCommenceTech);
+                    }
+                    
+                    // Recalculate bidding closure events if missing
+                    if (period.rosterBuildCommenceTech && !period.biddingClosureTech) {
+                        console.log(`Recalculating missing Bidding Closure Tech event for ${period.bidPeriodName}`);
+                        const biddingClosureTech = new Date(period.rosterBuildCommenceTech.getTime());
+                        biddingClosureTech.setUTCDate(biddingClosureTech.getUTCDate() + appSettings.biddingClosureTechOffset);
+                        period.biddingClosureTech = normalizeToUTCMidnight(biddingClosureTech);
+                    }
+                    
+                    // Recalculate CB pairing events if missing
+                    if (period.biddingClosureTech && !period.cbPairingPublishTech) {
+                        console.log(`Recalculating missing CB Pairing Publish Tech event for ${period.bidPeriodName}`);
+                        const cbPairingPublishTech = new Date(period.biddingClosureTech.getTime());
+                        cbPairingPublishTech.setUTCDate(cbPairingPublishTech.getUTCDate() + appSettings.cbPairingPublishTechOffset);
+                        period.cbPairingPublishTech = normalizeToUTCMidnight(cbPairingPublishTech);
+                    }
+                }
+            });
+            
+            // Save the corrected data
+            saveBidPeriodData();
+            
+            // Debug logging
+            debugCheckAllEvents();
+            
             // renderResultsTable(); // Called after ssim pagination is initialized
             renderCalendarView(); // Ensure calendar is rendered with loaded data
             updateCalendarGrid(); // Update styles/text on the now-rendered calendar
@@ -3700,6 +3963,29 @@ Cabin Publish: ${formatDate(finalCabinCrewPublishDate)}`;
             renderResultsTable(); // Now render SSIM table with correct view
         }
 
+        // Temporary debug function to check all events in periods
+        function debugCheckAllEvents() {
+            console.log('===== DEBUGGING EVENT DATES =====');
+            allBidPeriodData.forEach((period, idx) => {
+                console.log(`Period ${idx}: ${period.bidPeriodName}`);
+                console.log('  Tech Events:');
+                console.log('    → trainingHandoverTech:', period.trainingHandoverTech);
+                console.log('    → rosterBuildCommenceTech:', period.rosterBuildCommenceTech);  
+                console.log('    → biddingClosureTech:', period.biddingClosureTech);
+                console.log('    → cbPairingPublishTech:', period.cbPairingPublishTech);
+                console.log('  Cabin Events:');
+                console.log('    → trainingHandoverCabin:', period.trainingHandoverCabin);
+                console.log('    → rosterBuildCommenceCabin:', period.rosterBuildCommenceCabin);
+                console.log('    → biddingClosureCabin:', period.biddingClosureCabin);
+                console.log('    → cbPairingPublishCabin:', period.cbPairingPublishCabin);
+            });
+            
+            // Check visibility settings
+            console.log('===== VISIBILITY SETTINGS =====');
+            console.log(JSON.stringify(appSettings.eventTypeVisibility, null, 2));
+        }
+        
+        // Call this function at the end of loadInitialData
         // Removed redundant saveBidPeriodData function here as it's defined earlier
 
         function initialize() {
@@ -4072,12 +4358,51 @@ Cabin Publish: ${formatDate(finalCabinCrewPublishDate)}`;
             const dropdownContainer = document.getElementById('eventFilterDropdown');
             if (!dropdownContainer) return;
             dropdownContainer.innerHTML = ''; // Clear any existing content
-            dropdownContainer.className = 'absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 max-h-96 overflow-y-auto';
-            dropdownContainer.style.minWidth = '200px'; // Ensure minimum width for better readability
+            dropdownContainer.className = 'absolute right-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 z-50 max-h-96 overflow-y-auto';
+            dropdownContainer.style.minWidth = '250px'; // Wider for better readability with groups
+
+            // Define event type groups for better organization
+            const eventGroups = [
+                {
+                    name: 'Planning Events',
+                    color: '#e0f2fe',
+                    types: ['spCutoff', 'spFeedback', 'tradeOffDiscussion', 'finalSSIMHandover']
+                },
+                {
+                    name: 'Publish Events',
+                    color: '#fef9c3',
+                    types: ['techCrewPublish', 'cabinCrewPublish']
+                },
+                {
+                    name: 'Training Handover',
+                    color: '#e9d5ff',
+                    types: ['trainingHandoverTech', 'trainingHandoverCabin']
+                },
+                {
+                    name: 'Roster Build',
+                    color: '#bbf7d0',
+                    types: ['rosterBuildCommenceTech', 'rosterBuildCommenceCabin']
+                },
+                {
+                    name: 'Bidding Closure',
+                    color: '#fed7aa',
+                    types: ['biddingClosureTech', 'biddingClosureCabin']
+                },
+                {
+                    name: 'CB Pairing Publish',
+                    color: '#99f6e4',
+                    types: ['cbPairingPublishTech', 'cbPairingPublishCabin']
+                },
+                {
+                    name: 'Other',
+                    color: '#f3f4f6',
+                    types: ['publicHoliday']
+                }
+            ];
 
             const allEventTypes = {
                 ...eventTypes,
-                publicHoliday: { label: "Public Holiday" } // Add Public Holiday as a filterable type
+                publicHoliday: { label: "Public Holiday", type: "holiday" } // Add Public Holiday as a filterable type
             };
 
             // Ensure appSettings.eventTypeVisibility is initialized
@@ -4088,35 +4413,95 @@ Cabin Publish: ${formatDate(finalCabinCrewPublishDate)}`;
                 });
             }
 
-
-            for (const typeKey in allEventTypes) {
-                const typeLabel = allEventTypes[typeKey].label;
+            // Create a select all checkbox at the top
+            const allContainer = document.createElement('div');
+            allContainer.className = 'px-2 py-2 border-b border-gray-200';
+            
+            const allLabel = document.createElement('label');
+            allLabel.className = 'flex items-center font-semibold';
+            
+            const allCheckbox = document.createElement('input');
+            allCheckbox.type = 'checkbox';
+            allCheckbox.id = 'filter-all';
+            
+            // Check if all events are currently visible
+            const allVisible = Object.keys(allEventTypes).every(key => 
+                appSettings.eventTypeVisibility[key] !== false
+            );
+            allCheckbox.checked = allVisible;
+            
+            allCheckbox.addEventListener('change', (event) => {
+                const isChecked = event.target.checked;
                 
-                const label = document.createElement('label');
-                label.className = 'flex items-center whitespace-nowrap px-2 py-1 hover:bg-gray-100'; // Tailwind classes for single line items with hover effect
-
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.id = `filter-${typeKey}`;
-                checkbox.name = typeKey;
-                checkbox.checked = appSettings.eventTypeVisibility[typeKey] !== false; // Default to true if undefined
-                
-                checkbox.addEventListener('change', (event) => {
-                    appSettings.eventTypeVisibility[typeKey] = event.target.checked;
-                    localStorage.setItem('appSettings', JSON.stringify(appSettings)); // Save updated settings
-                    renderCalendarView(); // Re-render the calendar
+                // Update all checkboxes
+                document.querySelectorAll('#eventFilterDropdown input[type="checkbox"]').forEach(cb => {
+                    if (cb !== allCheckbox) {
+                        cb.checked = isChecked;
+                        // Update settings for this specific checkbox
+                        const eventKey = cb.name;
+                        if (eventKey) {
+                            appSettings.eventTypeVisibility[eventKey] = isChecked;
+                        }
+                    }
                 });
+                
+                // Save settings and update calendar
+                localStorage.setItem('appSettings', JSON.stringify(appSettings));
+                renderCalendarView();
+            });
+            
+            allLabel.appendChild(allCheckbox);
+            allLabel.appendChild(document.createTextNode(' Select All'));
+            allContainer.appendChild(allLabel);
+            dropdownContainer.appendChild(allContainer);
 
-                label.appendChild(checkbox);
-                label.appendChild(document.createTextNode(` ${typeLabel}`)); // Add space before label text
-                dropdownContainer.appendChild(label);
-            }
+            // Create each group with its events
+            eventGroups.forEach(group => {
+                // Create group header
+                const groupHeader = document.createElement('div');
+                groupHeader.className = 'px-2 py-2 font-medium text-gray-700 border-t border-gray-200';
+                groupHeader.style.backgroundColor = group.color + '40'; // Add transparency
+                groupHeader.textContent = group.name;
+                dropdownContainer.appendChild(groupHeader);
+                
+                // Add checkbox for each event type in this group
+                group.types.forEach(typeKey => {
+                    if (!allEventTypes[typeKey]) return; // Skip if event type doesn't exist
+                    
+                    const typeLabel = allEventTypes[typeKey].label;
+                    
+                    const label = document.createElement('label');
+                    label.className = 'flex items-center whitespace-nowrap px-4 py-1 hover:bg-gray-100'; // Indented with padding
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `filter-${typeKey}`;
+                    checkbox.name = typeKey;
+                    checkbox.checked = appSettings.eventTypeVisibility[typeKey] !== false; // Default to true if undefined
+                    
+                    checkbox.addEventListener('change', (event) => {
+                        appSettings.eventTypeVisibility[typeKey] = event.target.checked;
+                        
+                        // Update 'Select All' checkbox state
+                        const allStillChecked = Object.keys(allEventTypes).every(key => 
+                            appSettings.eventTypeVisibility[key] !== false
+                        );
+                        document.getElementById('filter-all').checked = allStillChecked;
+                        
+                        localStorage.setItem('appSettings', JSON.stringify(appSettings)); // Save updated settings
+                        renderCalendarView(); // Re-render the calendar
+                    });
+                    
+                    label.appendChild(checkbox);
+                    label.appendChild(document.createTextNode(` ${typeLabel}`)); // Add space before label text
+                    dropdownContainer.appendChild(label);
+                });
+            });
         }
 
     </script>
 </body>
 </html>
-
 </file_content>
 <environment_details>
 # VSCode Visible Files
