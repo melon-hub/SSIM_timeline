@@ -4360,6 +4360,7 @@ Cabin Publish: ${formatDate(finalCabinCrewPublishDate)}`;
             dropdownContainer.innerHTML = ''; // Clear any existing content
             dropdownContainer.className = 'absolute right-0 mt-2 w-60 bg-white rounded-md shadow-lg py-1 z-50 max-h-96 overflow-y-auto';
             dropdownContainer.style.minWidth = '250px'; // Wider for better readability with groups
+            dropdownContainer.classList.add('hidden'); // Ensure dropdown is hidden on load
 
             // Define event type groups for better organization
             const eventGroups = [
