@@ -4494,6 +4494,8 @@ Cabin Publish: ${formatDate(finalCabinCrewPublishDate)}`;
             const generatedCount = autoGenerateMissingPeriods();
             if (approvedCount > 0 || generatedCount > 0) {
                 console.log(`AUTO: Approved ${approvedCount} past period(s), Generated ${generatedCount} future period(s)`);
+                // Re-render the SSIM table to show newly generated periods
+                renderResultsTable();
             }
 
             console.log('DEBUG: initialize - Calling suggestSpCutoffDate() with isInitializing = true.');
