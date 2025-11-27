@@ -1341,8 +1341,11 @@
             document.getElementById('settingTechCrewPublishOffset').value = appSettings.techCrewPublishOffset;
             document.getElementById('settingCabinCrewPublishOffset').value = appSettings.cabinCrewPublishOffset;
 
-            // Auto-generation settings
-            document.getElementById('settingAutoGenerateEnabled').checked = appSettings.autoGenerateEnabled !== false; // Default true
+            // Auto-generation settings - ensure boolean value exists
+            if (typeof appSettings.autoGenerateEnabled !== 'boolean') {
+                appSettings.autoGenerateEnabled = true; // Default to enabled
+            }
+            document.getElementById('settingAutoGenerateEnabled').checked = appSettings.autoGenerateEnabled;
             document.getElementById('settingAutoGenerateMonthsAhead').value = appSettings.autoGenerateMonthsAhead || 18;
 
             // Populate generate year dropdown
