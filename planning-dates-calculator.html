@@ -1096,19 +1096,27 @@
                 </div>
             </div>
 
-            <div class="mt-6 flex flex-col gap-3">
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="recalculateDatesInModal()" class="bg-[var(--orange-accent)] hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-md text-sm" title="Recalculates SP Feedback, Trade Off, SSIM Handover, and Publish Dates FORWARD from SP Cutoff Date.">
-                        Recalculate Forward
-                    </button>
-                    <button onclick="recalculateBackwardFromSSIM()" class="bg-[var(--navy-primary)] hover:bg-blue-900 text-white font-semibold py-2 px-4 rounded-md text-sm" title="Recalculates SP Cutoff, SP Feedback, and Trade Off BACKWARD from Final SSIM Handover Date.">
-                        Recalculate Backward
-                    </button>
-                    <button onclick="deleteBidPeriod()" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md text-sm">Delete</button>
+            <div class="mt-6 flex flex-col gap-4">
+                <!-- Row 1: Recalculate Actions -->
+                <div class="border-t border-gray-200 pt-4">
+                    <p class="text-xs text-gray-500 mb-2">Recalculate dates:</p>
+                    <div class="flex gap-2">
+                        <button onclick="recalculateDatesInModal()" class="flex-1 bg-[var(--orange-accent)] hover:bg-orange-700 text-white font-semibold py-2 px-3 rounded-md text-sm" title="Recalculates SP Feedback, Trade Off, SSIM Handover, and Publish Dates FORWARD from SP Cutoff Date.">
+                            ← Forward from Cutoff
+                        </button>
+                        <button onclick="recalculateBackwardFromSSIM()" class="flex-1 bg-[var(--navy-primary)] hover:bg-blue-900 text-white font-semibold py-2 px-3 rounded-md text-sm" title="Recalculates SP Cutoff, SP Feedback, and Trade Off BACKWARD from Final SSIM Handover Date.">
+                            Backward from SSIM →
+                        </button>
+                    </div>
                 </div>
-                <div class="flex justify-end space-x-3">
-                    <button onclick="closeEditModal()" class="btn-secondary py-2 px-4">Cancel</button>
-                    <button onclick="saveEditedDates()" class="btn-primary py-2 px-4">Save Changes</button>
+
+                <!-- Row 2: Delete / Cancel / Save -->
+                <div class="flex justify-between items-center border-t border-gray-200 pt-4">
+                    <button onclick="deleteBidPeriod()" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md text-sm">Delete</button>
+                    <div class="flex gap-3">
+                        <button onclick="closeEditModal()" class="btn-secondary py-2 px-4">Cancel</button>
+                        <button onclick="saveEditedDates()" class="btn-primary py-2 px-4">Save Changes</button>
+                    </div>
                 </div>
             </div>
         </div>
