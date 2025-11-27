@@ -427,16 +427,61 @@
             width: 100%; margin-bottom: 0.75rem; 
         }
         .info-icon {
-            cursor: help; 
+            cursor: help;
             margin-left: 0.25rem; /* Tailwind ml-1 */
             padding: 0.1rem 0.2rem; /* Small padding to increase hover area */
             color: #60a5fa; /* Tailwind blue-500 */
             font-weight: bold;
-            display: inline-block; 
-            position: relative; 
-            user-select: none; 
+            display: inline-block;
+            position: relative;
+            user-select: none;
         }
-        
+
+        /* Modified Date Indicator - shows when dates have been manually adjusted */
+        .date-modified {
+            position: relative;
+        }
+        .date-modified::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 70%;
+            background-color: var(--orange-accent);
+            border-radius: 2px;
+        }
+        .date-modified-indicator {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: var(--orange-accent);
+            border-radius: 50%;
+            margin-left: 6px;
+            vertical-align: middle;
+            animation: pulse-subtle 2s ease-in-out infinite;
+        }
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.9); }
+        }
+        .modified-row {
+            background: linear-gradient(90deg, rgba(254, 88, 0, 0.08) 0%, transparent 15%) !important;
+        }
+        .modified-row td:first-child {
+            position: relative;
+        }
+        .modified-row td:first-child::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background-color: var(--orange-accent);
+        }
+
         /* Tab System */
         .tabs-container {
             border: 1px solid var(--navy-light);
@@ -1051,16 +1096,19 @@
                 </div>
             </div>
 
-            <div class="mt-6 flex justify-between items-center"> 
-                <div> <!-- Group for Recalculate and Delete -->
-                    <button onclick="recalculateDatesInModal()" class="bg-[var(--orange-accent)] hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-md text-sm mr-2" title="Recalculates SP Feedback, Trade Off, SSIM Handover, and Publish Dates based on the currently entered SP Cutoff Date.">
-                        Recalculate
+            <div class="mt-6 flex flex-col gap-3">
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="recalculateDatesInModal()" class="bg-[var(--orange-accent)] hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-md text-sm" title="Recalculates SP Feedback, Trade Off, SSIM Handover, and Publish Dates FORWARD from SP Cutoff Date.">
+                        Recalculate Forward
                     </button>
-                    <button onclick="deleteBidPeriod()" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md">Delete</button> <!-- Red kept for destructive action -->
+                    <button onclick="recalculateBackwardFromSSIM()" class="bg-[var(--navy-primary)] hover:bg-blue-900 text-white font-semibold py-2 px-4 rounded-md text-sm" title="Recalculates SP Cutoff, SP Feedback, and Trade Off BACKWARD from Final SSIM Handover Date.">
+                        Recalculate Backward
+                    </button>
+                    <button onclick="deleteBidPeriod()" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md text-sm">Delete</button>
                 </div>
-                <div class="space-x-3">
-                    <button onclick="closeEditModal()" class="btn-secondary py-2 px-4">Cancel</button> <!-- Applied btn-secondary style -->
-                    <button onclick="saveEditedDates()" class="btn-primary py-2 px-4">Save Changes</button> <!-- Applied btn-primary style -->
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeEditModal()" class="btn-secondary py-2 px-4">Cancel</button>
+                    <button onclick="saveEditedDates()" class="btn-primary py-2 px-4">Save Changes</button>
                 </div>
             </div>
         </div>
@@ -1612,7 +1660,20 @@
             }
             return currentDate; // Return Date object
         }
-        
+
+        function subtractWorkingDays(startDateStr, daysToSubtract) {
+            let currentDate = parseDate(startDateStr);
+            if (!currentDate) return null;
+            let workingDaysCounted = 0;
+            while (workingDaysCounted < daysToSubtract) {
+                currentDate.setUTCDate(currentDate.getUTCDate() - 1); // Decrement UTC date
+                if (!isWeekend(currentDate) && !isPublicHoliday(currentDate)) {
+                    workingDaysCounted++;
+                }
+            }
+            return currentDate; // Return Date object
+        }
+
         function addCalendarDays(startDateStr, daysToAdd) { // Helper to add calendar days
             let currentDate = parseDate(startDateStr);
             if (!currentDate) return null;
@@ -2176,8 +2237,23 @@ function autoAddAndCalculateNextBidPeriod() {
             viewableBidPeriods.forEach(period => {
                 const newRow = tableBody.insertRow();
 
+                // Add modified row indicator if dates were manually adjusted
+                if (period.datesManuallyModified) {
+                    newRow.classList.add('modified-row');
+                    newRow.title = `Dates manually adjusted${period.lastModifiedDate ? ' on ' + new Date(period.lastModifiedDate).toLocaleDateString() : ''}`;
+                }
+
                 const bidPeriodCell = newRow.insertCell();
                 bidPeriodCell.textContent = period.bidPeriodName;
+
+                // Add modified indicator dot after bid period name
+                if (period.datesManuallyModified) {
+                    const modifiedIndicator = document.createElement('span');
+                    modifiedIndicator.className = 'date-modified-indicator';
+                    modifiedIndicator.title = 'Dates manually adjusted';
+                    bidPeriodCell.appendChild(modifiedIndicator);
+                }
+
                 if (period.affectedHolidays && period.affectedHolidays.length > 0) {
                     const infoIcon = document.createElement('span');
                     infoIcon.className = 'info-icon';
@@ -2655,6 +2731,62 @@ function autoAddAndCalculateNextBidPeriod() {
             }
         }
 
+        // Backward recalculation: When user adjusts Final SSIM Handover, calculate backward
+        function recalculateBackwardFromSSIM() {
+            const ssimHandoverStr = document.getElementById('editFinalSSIMHandoverDate').value;
+            const rosterStartStr = document.getElementById('editRosterStartDate').value;
+
+            if (!ssimHandoverStr) {
+                showToast("Final SSIM Handover date must be set to recalculate backward.", 3500);
+                return;
+            }
+
+            try {
+                // Calculate Trade Off Discussion: SSIM Handover - ssimHandoverOffset working days
+                const tradeOffDate = subtractWorkingDays(ssimHandoverStr, appSettings.ssimHandoverOffset);
+                if (tradeOffDate) {
+                    document.getElementById('editTradeOffDiscussionDate').value = formatDateForInput(tradeOffDate);
+                }
+
+                // Calculate SP Feedback: Trade Off - tradeOffOffset working days
+                const spFeedbackDate = subtractWorkingDays(formatDateForCalc(tradeOffDate), appSettings.tradeOffOffset);
+                if (spFeedbackDate) {
+                    document.getElementById('editSpFeedbackDate').value = formatDateForInput(spFeedbackDate);
+                }
+
+                // Calculate SP Cutoff: SP Feedback - spFeedbackOffset working days
+                const spCutoffDate = subtractWorkingDays(formatDateForCalc(spFeedbackDate), appSettings.spFeedbackOffset);
+                if (spCutoffDate) {
+                    document.getElementById('editSpCutoffDate').value = formatDateForInput(spCutoffDate);
+                }
+
+                // Mark the period as manually modified (will be saved when Save Changes is clicked)
+                const periodId = document.getElementById('editPeriodId').value;
+                const periodIndex = allBidPeriodData.findIndex(p => p.id === periodId);
+                if (periodIndex !== -1) {
+                    // Store temporary flag - will be committed on save
+                    document.getElementById('editModalOverlay').dataset.datesModified = 'true';
+                }
+
+                showToast("Dates recalculated backward from SSIM Handover.", 2500);
+            } catch (error) {
+                showToast(`Error during backward recalculation: ${error.message}`, 3500);
+                console.error("Backward recalculation error:", error);
+            }
+        }
+
+        // Event listener setup for SSIM Handover date changes in modal
+        function setupSSIMHandoverListener() {
+            const ssimInput = document.getElementById('editFinalSSIMHandoverDate');
+            if (ssimInput) {
+                ssimInput.addEventListener('change', function() {
+                    // Show a toast hint about the Recalculate Backward button
+                    showToast('Tip: Use "Recalculate Backward" button to adjust earlier dates from this SSIM Handover date.', 3500);
+                });
+            }
+        }
+
+        // Call setup when DOM is ready (will be called in DOMContentLoaded)
 
         function saveEditedDates() {
             const periodId = document.getElementById('editPeriodId').value;
@@ -2682,7 +2814,7 @@ function autoAddAndCalculateNextBidPeriod() {
                     throw new Error('Edited SP Cutoff Date must be before Roster Start Date.');
                 }
 
-                allBidPeriodData[periodIndex].bidPeriodName = originalBidPeriodName; 
+                allBidPeriodData[periodIndex].bidPeriodName = originalBidPeriodName;
                 allBidPeriodData[periodIndex].rosterStart = editedRosterStart;
                 allBidPeriodData[periodIndex].rosterEnd = editedRosterEnd;
                 allBidPeriodData[periodIndex].spCutoff = editedSpCutoff;
@@ -2692,6 +2824,15 @@ function autoAddAndCalculateNextBidPeriod() {
                 allBidPeriodData[periodIndex].techCrewPublish = parseDate(document.getElementById('editTechCrewPublishDate').value) || allBidPeriodData[periodIndex].techCrewPublish;
                 allBidPeriodData[periodIndex].cabinCrewPublish = parseDate(document.getElementById('editCabinCrewPublishDate').value) || allBidPeriodData[periodIndex].cabinCrewPublish;
                 allBidPeriodData[periodIndex].approvalStatus = document.getElementById('editApprovalStatus').value; // Save approval status
+
+                // Track if dates were manually modified (backward recalculation or manual edit)
+                const modalOverlay = document.getElementById('editModalOverlay');
+                if (modalOverlay && modalOverlay.dataset.datesModified === 'true') {
+                    allBidPeriodData[periodIndex].datesManuallyModified = true;
+                    allBidPeriodData[periodIndex].lastModifiedDate = new Date().toISOString();
+                    // Clear the flag for next edit
+                    delete modalOverlay.dataset.datesModified;
+                }
                 
                 const periodEventDates = [editedSpCutoff, allBidPeriodData[periodIndex].spFeedback, allBidPeriodData[periodIndex].tradeOffDiscussion, allBidPeriodData[periodIndex].finalSSIMHandover, allBidPeriodData[periodIndex].techCrewPublish, allBidPeriodData[periodIndex].cabinCrewPublish].filter(Boolean);
                 const earliestEvent = new Date(Math.min(...periodEventDates.map(d => d.getTime())));
@@ -4267,6 +4408,9 @@ Cabin Publish: ${formatDate(finalCabinCrewPublishDate)}`;
             // initializeSsimTablePagination(); // Moved to end of loadInitialData
 
             initialize();
+
+            // Setup event listener for SSIM Handover date backward recalculation
+            setupSSIMHandoverListener();
 
             // Add event listeners for SSIM Table Pagination buttons
             const ssimTablePrevMonthBtn = document.getElementById('ssimTablePrevMonthBtn');
