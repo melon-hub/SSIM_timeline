@@ -790,6 +790,36 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="settings-section border-t border-gray-200 pt-4 mt-4">
+                        <h3 class="element-title">Period Automation</h3>
+                        <p class="description mb-3">Automatically generate future periods and approve past periods on page load.</p>
+                        <div class="settings-parameter-group">
+                            <div class="flex items-center mb-3">
+                                <input type="checkbox" id="settingAutoGenerateEnabled" class="mr-2 h-4 w-4">
+                                <label for="settingAutoGenerateEnabled" class="text-sm">Enable auto-generation of future periods</label>
+                            </div>
+                            <div class="settings-grid-item">
+                                <label for="settingAutoGenerateMonthsAhead">Months ahead to auto-generate:</label>
+                                <input type="number" id="settingAutoGenerateMonthsAhead" min="1" max="36" class="w-full">
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">Bulk Generate Periods</h4>
+                            <p class="description mb-2">Generate all 12 periods for a specific year (skips existing periods).</p>
+                            <div class="flex gap-2 items-end">
+                                <div>
+                                    <label for="generateYearSelect" class="block text-sm text-gray-600 mb-1">Year:</label>
+                                    <select id="generateYearSelect" class="py-2 px-3 border border-gray-300 rounded-md">
+                                        <!-- Populated by JS -->
+                                    </select>
+                                </div>
+                                <button onclick="generatePeriodsForYear(parseInt(document.getElementById('generateYearSelect').value))" class="btn-primary py-2 px-4">
+                                    Generate Year
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="publicHolidays" class="tab-content">
@@ -1229,6 +1259,9 @@
                 biddingClosureCabinOffset: -5,      // Default: 5 calendar days BEFORE Roster Build Commence Cabin
                 rosterBuildCommenceTechOffset: -5,  // Default: 5 calendar days BEFORE Tech Crew Publish
                 rosterBuildCommenceCabinOffset: -5, // Default: 5 calendar days BEFORE Cabin Crew Publish
+                // Auto-generation settings
+                autoGenerateEnabled: true,          // Enable auto-generation of future periods
+                autoGenerateMonthsAhead: 18,        // How many months ahead to auto-generate
                 colors: {
                     planning: '#e0f2fe',
                     publish: '#fef9c3',
@@ -1307,6 +1340,28 @@
             document.getElementById('settingSsimFridayRule').checked = appSettings.ssimFridayRule;
             document.getElementById('settingTechCrewPublishOffset').value = appSettings.techCrewPublishOffset;
             document.getElementById('settingCabinCrewPublishOffset').value = appSettings.cabinCrewPublishOffset;
+
+            // Auto-generation settings
+            document.getElementById('settingAutoGenerateEnabled').checked = appSettings.autoGenerateEnabled !== false; // Default true
+            document.getElementById('settingAutoGenerateMonthsAhead').value = appSettings.autoGenerateMonthsAhead || 18;
+
+            // Populate generate year dropdown
+            populateGenerateYearDropdown();
+        }
+
+        function populateGenerateYearDropdown() {
+            const select = document.getElementById('generateYearSelect');
+            if (!select) return;
+
+            const currentYear = new Date().getFullYear();
+            select.innerHTML = '';
+
+            for (let year = currentYear; year <= currentYear + 3; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                select.appendChild(option);
+            }
         }
 
         // --- Settings Navigation Functions ---
@@ -3151,6 +3206,10 @@ function autoAddAndCalculateNextBidPeriod() {
             appSettings.colors.biddingClosureColor = document.getElementById('biddingClosureColorSetting').value || '#fed7aa';
             appSettings.colors.rosterBuildCommenceColor = document.getElementById('rosterBuildCommenceColorSetting').value || '#bbf7d0';
 
+            // Save auto-generation settings
+            appSettings.autoGenerateEnabled = document.getElementById('settingAutoGenerateEnabled').checked;
+            appSettings.autoGenerateMonthsAhead = parseInt(document.getElementById('settingAutoGenerateMonthsAhead').value) || 18;
+
             localStorage.setItem('appSettings', JSON.stringify(appSettings));
             
             // Determine active tab
@@ -4205,9 +4264,202 @@ Cabin Publish: ${formatDate(finalCabinCrewPublishDate)}`;
             console.log('===== VISIBILITY SETTINGS =====');
             console.log(JSON.stringify(appSettings.eventTypeVisibility, null, 2));
         }
-        
+
         // Call this function at the end of loadInitialData
         // Removed redundant saveBidPeriodData function here as it's defined earlier
+
+        // --- Auto-Approve Past Periods ---
+        // Sets any past period with "Pending" status to "Approved"
+        function autoApprovePastPeriods() {
+            const today = new Date();
+            today.setUTCHours(0, 0, 0, 0);
+            let approvedCount = 0;
+
+            allBidPeriodData.forEach(period => {
+                if (period.rosterStart && period.rosterStart < today) {
+                    if (period.approvalStatus === 'Pending' || !period.approvalStatus) {
+                        period.approvalStatus = 'Approved';
+                        approvedCount++;
+                        console.log(`AUTO-APPROVE: Set ${period.bidPeriodName} to Approved (past period)`);
+                    }
+                }
+            });
+
+            if (approvedCount > 0) {
+                console.log(`AUTO-APPROVE: Auto-approved ${approvedCount} past period(s)`);
+                saveBidPeriodData();
+            }
+            return approvedCount;
+        }
+
+        // --- Auto-Generate Missing Future Periods ---
+        // Generates missing periods from current month to X months ahead
+        function autoGenerateMissingPeriods() {
+            if (!appSettings.autoGenerateEnabled) {
+                console.log('AUTO-GENERATE: Disabled in settings');
+                return 0;
+            }
+
+            const today = new Date();
+            const currentMonth = today.getUTCMonth();
+            const currentYear = today.getUTCFullYear();
+            const monthsAhead = appSettings.autoGenerateMonthsAhead || 18;
+
+            let generatedCount = 0;
+            const monthAbbreviations = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+            console.log(`AUTO-GENERATE: Checking periods from ${monthAbbreviations[currentMonth]}-${currentYear} to +${monthsAhead} months`);
+
+            for (let i = 0; i < monthsAhead; i++) {
+                const targetDate = new Date(Date.UTC(currentYear, currentMonth + i, 1));
+                const targetMonth = targetDate.getUTCMonth();
+                const targetYear = targetDate.getUTCFullYear();
+                const periodName = `${monthAbbreviations[targetMonth]}-${String(targetYear).slice(-2)}`;
+
+                // Check if period already exists
+                const exists = allBidPeriodData.some(p =>
+                    p.bidPeriodName && p.bidPeriodName.toLowerCase() === periodName.toLowerCase()
+                );
+
+                if (!exists) {
+                    console.log(`AUTO-GENERATE: Creating missing period ${periodName}`);
+                    const created = createPeriodFromDefinition(periodName, targetMonth, targetYear);
+                    if (created) {
+                        generatedCount++;
+                    }
+                }
+            }
+
+            if (generatedCount > 0) {
+                // Sort after adding
+                allBidPeriodData.sort((a, b) => {
+                    if (!a.rosterStart || !b.rosterStart) return 0;
+                    return a.rosterStart.getTime() - b.rosterStart.getTime();
+                });
+                saveBidPeriodData();
+                console.log(`AUTO-GENERATE: Created ${generatedCount} new period(s)`);
+            }
+
+            return generatedCount;
+        }
+
+        // Helper function to create a period from standardRosterPeriodDefinitions
+        function createPeriodFromDefinition(periodName, monthIndex, year) {
+            const monthAbbreviations = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const monthAbbr = monthAbbreviations[monthIndex];
+
+            const definition = standardRosterPeriodDefinitions.find(
+                def => def.period.toLowerCase() === monthAbbr.toLowerCase()
+            );
+
+            if (!definition) {
+                console.error(`AUTO-GENERATE: No definition found for ${monthAbbr}`);
+                return false;
+            }
+
+            try {
+                const rosterStartStr = definition.startRule(year);
+                const rosterEndStr = definition.endRule(year);
+                const rosterStart = parseDate(rosterStartStr);
+                const rosterEnd = parseDate(rosterEndStr);
+
+                if (!rosterStart || !rosterEnd) {
+                    console.error(`AUTO-GENERATE: Invalid dates for ${periodName}`);
+                    return false;
+                }
+
+                // Calculate SP Cutoff using the standard rule
+                const spCutoffDate = new Date(rosterStart);
+                spCutoffDate.setUTCMonth(spCutoffDate.getUTCMonth() - appSettings.spCutoffRule.monthsPrior);
+                spCutoffDate.setUTCDate(appSettings.spCutoffRule.day);
+                const adjustedSpCutoff = adjustForWeekend(spCutoffDate, appSettings.spCutoffRule.weekendAdjustment);
+
+                // Calculate other dates
+                const spFeedbackDate = addWorkingDays(formatDateForCalc(adjustedSpCutoff), appSettings.spFeedbackOffset);
+                const tradeOffDiscussionDate = addWorkingDays(formatDateForCalc(spFeedbackDate), appSettings.tradeOffOffset);
+                let finalSSIMHandoverDate = addWorkingDays(formatDateForCalc(tradeOffDiscussionDate), appSettings.ssimHandoverOffset);
+
+                if (appSettings.ssimFridayRule && finalSSIMHandoverDate.getUTCDay() === FRIDAY) {
+                    let prevDay = new Date(finalSSIMHandoverDate.getTime());
+                    prevDay.setUTCDate(prevDay.getUTCDate() - 1);
+                    finalSSIMHandoverDate = getFinalAdjustedDate(formatDateForCalc(prevDay));
+                }
+
+                // Calculate publish dates
+                const baseTechCrewPublishDate = new Date(rosterStart.getTime());
+                baseTechCrewPublishDate.setUTCDate(baseTechCrewPublishDate.getUTCDate() - (appSettings.techCrewPublishOffset + 1));
+                const finalTechCrewPublishDate = getFinalAdjustedDate(formatDateForCalc(baseTechCrewPublishDate));
+
+                const baseCabinCrewPublishDate = new Date(rosterStart.getTime());
+                baseCabinCrewPublishDate.setUTCDate(baseCabinCrewPublishDate.getUTCDate() - (appSettings.cabinCrewPublishOffset + 1));
+                const finalCabinCrewPublishDate = getFinalAdjustedDate(formatDateForCalc(baseCabinCrewPublishDate));
+
+                // Create the period object
+                const newPeriod = {
+                    id: 'auto_' + Date.now() + '_' + periodName.replace(/\s/g, '_'),
+                    bidPeriodName: periodName,
+                    rosterStart: normalizeToUTCMidnight(rosterStart),
+                    rosterEnd: normalizeToUTCMidnight(rosterEnd),
+                    spCutoff: normalizeToUTCMidnight(adjustedSpCutoff),
+                    spFeedback: spFeedbackDate,
+                    tradeOffDiscussion: tradeOffDiscussionDate,
+                    finalSSIMHandover: finalSSIMHandoverDate,
+                    techCrewPublish: finalTechCrewPublishDate,
+                    cabinCrewPublish: finalCabinCrewPublishDate,
+                    approvalStatus: 'Pending',
+                    isStaticOrigin: false,
+                    autoGenerated: true,
+                    affectedHolidays: []
+                };
+
+                allBidPeriodData.push(newPeriod);
+                return true;
+
+            } catch (error) {
+                console.error(`AUTO-GENERATE: Error creating ${periodName}:`, error);
+                return false;
+            }
+        }
+
+        // --- Generate All Periods for a Year ---
+        function generatePeriodsForYear(year) {
+            const monthAbbreviations = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            let generatedCount = 0;
+            let skippedCount = 0;
+
+            for (let month = 0; month < 12; month++) {
+                const periodName = `${monthAbbreviations[month]}-${String(year).slice(-2)}`;
+
+                // Check if period already exists
+                const exists = allBidPeriodData.some(p =>
+                    p.bidPeriodName && p.bidPeriodName.toLowerCase() === periodName.toLowerCase()
+                );
+
+                if (exists) {
+                    skippedCount++;
+                    continue;
+                }
+
+                const created = createPeriodFromDefinition(periodName, month, year);
+                if (created) {
+                    generatedCount++;
+                }
+            }
+
+            if (generatedCount > 0) {
+                // Sort and save
+                allBidPeriodData.sort((a, b) => {
+                    if (!a.rosterStart || !b.rosterStart) return 0;
+                    return a.rosterStart.getTime() - b.rosterStart.getTime();
+                });
+                saveBidPeriodData();
+                renderResultsTable();
+                renderCalendarView();
+            }
+
+            showToast(`Generated ${generatedCount} period(s) for ${year}. ${skippedCount} already existed.`, 3000);
+            return { generated: generatedCount, skipped: skippedCount };
+        }
 
         function initialize() {
             console.log('DEBUG: initialize() called.');
@@ -4236,6 +4488,13 @@ Cabin Publish: ${formatDate(finalCabinCrewPublishDate)}`;
             populateYearDropdown();
             populateBidMonthDropdown(new Date().getFullYear());
             loadInitialData(); // This populates allBidPeriodData
+
+            // Auto-approve past periods and auto-generate missing future periods
+            const approvedCount = autoApprovePastPeriods();
+            const generatedCount = autoGenerateMissingPeriods();
+            if (approvedCount > 0 || generatedCount > 0) {
+                console.log(`AUTO: Approved ${approvedCount} past period(s), Generated ${generatedCount} future period(s)`);
+            }
 
             console.log('DEBUG: initialize - Calling suggestSpCutoffDate() with isInitializing = true.');
             suggestSpCutoffDate(true); // Pass true for initialization
